@@ -196,10 +196,8 @@ func decipherFields(ctx context.Context, geoFieldname, idFieldname string, descr
 				}
 				continue
 			case "numeric":
-				num, err := strconv.ParseFloat(v.(string), 64)
-				if err != nil {
-					return 0, nil, nil, fmt.Errorf("Unable to parse numeric (%v) to float64 err: %v", v.(string), err)
-				}
+				var num float64
+				v.(*pgtype.Numeric).AssignTo(&num)
 				tags[desc.Name] = num
 				continue
 			default:
