@@ -1,6 +1,8 @@
 package postgis
 
 import (
+	"context"
+	"fmt"
 	"os"
 	"reflect"
 	"strconv"
@@ -8,6 +10,7 @@ import (
 
 	"github.com/go-spatial/geom"
 	"github.com/go-spatial/tegola/internal/ttools"
+	"github.com/jackc/pgx"
 )
 
 // TESTENV is the environment variable that must be set to "yes" to run postgis tests.
@@ -84,6 +87,67 @@ func TestLayerGeomType(t *testing.T) {
 		if !reflect.DeepEqual(tc.geom, layer.geomType) {
 			t.Errorf("[%v] geom type, expected %v got %v", i, tc.geom, layer.geomType)
 			continue
+		}
+	}
+}
+
+func TestDecipherFields(t *testing.T) {
+	ttools.ShouldSkip(t, TESTENV)
+	cc := pgx.ConnConfig{
+		Host:     os.Getenv("PGHOST"),
+		Port:     5432,
+		Database: os.Getenv("PGDATABASE"),
+		User:     os.Getenv("PGUSER"),
+		Password: os.Getenv("PGPASSWORD"),
+	}
+
+	type TestCase struct {
+		id           int32
+		expectedTags map[string]string
+	}
+
+	testCases := []TestCase{
+		{
+			id:           1,
+			expectedTags: map[string]string{"height": "9", "id": "1"},
+		},
+		{
+			id:           2,
+			expectedTags: map[string]string{"hello": "there", "good": "day"},
+		},
+	}
+
+	conn, err := pgx.Connect(cc)
+	if err != nil {
+		t.Errorf("Unable to connect to database: %v", err)
+	}
+	defer conn.Close()
+
+	for _, tc := range testCases {
+		sql := fmt.Sprintf("SELECT id, tags FROM hstore_test WHERE id = %v;", tc.id)
+		rows, err := conn.Query(sql)
+		if err != nil {
+			t.Errorf("Error performing query: %v", err)
+		}
+		defer rows.Close()
+
+		i := 0
+		for rows.Next() {
+			geoFieldname := "geom"
+			idFieldname := "id"
+			descriptions := rows.FieldDescriptions()
+			vals, err := rows.Values()
+			if err != nil {
+				t.Errorf("[%v] Problem collecting row values", i)
+			}
+
+			_, _, tags, err := decipherFields(context.TODO(), geoFieldname, idFieldname, descriptions, vals)
+			for k, v := range tags {
+				if tc.expectedTags[k] != v {
+					t.Errorf("[%v] Missing or bad value for tag %v: %v != %v", i, k, v, tc.expectedTags[k])
+				}
+			}
+			i++
 		}
 	}
 }

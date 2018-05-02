@@ -170,32 +170,16 @@ func decipherFields(ctx context.Context, geoFieldname, idFieldname string, descr
 		case idFieldname:
 			gid, err = gId(v)
 		default:
-			switch desc.DataTypeName {
-			// hstore is a special case
-			case "hstore":
-				// parse our Hstore values into keys and values
-
-				// keys, values, err := pgx.ParseHstore(v.(string))
-				// if err != nil {
-				// 	return gid, geom, tags, fmt.Errorf("Unable to parse Hstore err: %v", err)
-				// }
-				hs, ok := v.(pgtype.Hstore)
-				if !ok {
-					return 0, nil, nil, fmt.Errorf("problem collecting hstore")
-				}
-
-				m, ok := hs.Get().(map[string]pgtype.Text)
-				if !ok {
-					return 0, nil, nil, fmt.Errorf("problem collecting hstore")
-				}
-				for k, v := range m {
+			switch vex := v.(type) {
+			case map[string]pgtype.Text:
+				for k, v := range vex {
 					// we need to check if the key already exists. if it does, then don't overwrite it
 					if _, ok := tags[k]; !ok {
-						tags[k] = v
+						tags[k] = v.String
 					}
 				}
 				continue
-			case "numeric":
+			case *pgtype.Numeric:
 				var num float64
 				v.(*pgtype.Numeric).AssignTo(&num)
 				tags[desc.Name] = num
