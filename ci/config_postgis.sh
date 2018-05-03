@@ -9,7 +9,7 @@ configure_postgis() {
     local test_data="tegola-postgis-test-data.backup"
 
     #   fetch our test data
-    # curl $test_data_url > $test_data
+    curl $test_data_url > $test_data
 
     #   import the data to postgres
     pg_restore -C -d postgres $test_data
