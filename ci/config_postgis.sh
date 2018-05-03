@@ -9,11 +9,13 @@ configure_postgis() {
     local test_data="tegola-postgis-test-data.backup"
 
     #   fetch our test data
-    curl $test_data_url > $test_data
+    # curl $test_data_url > $test_data
 
+    psql -d postgres -c 'DROP DATABASE IF EXISTS tegola;'
+    psql -d postgres -c 'CREATE DATABASE tegola;'
 
     #   import the data to postgres
-    pg_restore -C -d postgres $test_data
+    pg_restore -C -d tegola $test_data
 
     #   clean up our test data
     rm $test_data
