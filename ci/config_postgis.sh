@@ -12,6 +12,7 @@ configure_postgis() {
     curl $test_data_url > $test_data
 
     #   import the data to postgres
+    psql -d postgres -c 'DROP DATABASE IF EXISTS "tegola-test-data"'
     pg_restore -C -d postgres $test_data
 
     #   clean up our test data
