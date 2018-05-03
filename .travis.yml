@@ -13,7 +13,7 @@ env:
     - RUN_POSTGIS_TESTS=yes
     - PGHOST="localhost"
     - PGPORT=5432
-    - PGDATABASE="tegola"
+    - PGDATABASE="tegola-test-data"
     - PGUSER="postgres"
     - DOCKERHUB_ORG="gospatial"
     - DOCKERHUB_REPO="tegola"
