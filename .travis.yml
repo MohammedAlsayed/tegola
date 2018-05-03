@@ -46,6 +46,9 @@ addons:
     packages:
     - postgresql-9.4-postgis-2.3
 
+# before_install:
+#   - apt-get install postgresql-9.4-postgis-2.3
+
 install:
   - echo $TRAVIS_GO_VERSION
   - bash ci/build_bindata.sh
